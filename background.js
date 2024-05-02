@@ -24,7 +24,7 @@ async function captureScreen(tabId) {
     .then((imageUri) => {
       console.log("Image URI", imageUri);
       console.log("After capture process finishes");
-      chrome.runtime.sendMessage({ type: "image_data", imageUri});
+      chrome.runtime.sendMessage({ type: "image_data", imageUri });
 
       sendToGemini(imageUri);
     })
@@ -33,9 +33,9 @@ async function captureScreen(tabId) {
     });
 }
 
-const sendToGemini = async (imageUri) => {
+async function sendToGemini(imageUri) {
   const cleanedUri = imageUri.replace("data:image/jpeg;base64,", "");
-  const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+  const GOOGLE_API_KEY = ""//replace with gemini API
   const url =
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=" +
     GOOGLE_API_KEY;
@@ -56,6 +56,11 @@ const sendToGemini = async (imageUri) => {
       },
     ],
   };
+  console.log("Sending screenshot to Gemini");
+  sendScreenshot(url, data);
+}
+
+async function sendScreenshot(url, data) {
   fetch(url, {
     method: "POST",
     headers: {
@@ -67,28 +72,33 @@ const sendToGemini = async (imageUri) => {
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
+      console.log("screnshot sent", response);
       return response.json();
     })
     .then((data) => {
       console.log("full response", data);
-      const arr = data.candidates
+      const arr = data.candidates;
       console.log("arr", arr);
-      const textArr = arr[0].content.parts
+      const textArr = arr[0].content.parts;
       console.log("textArr", textArr);
-      const text = textArr[0].text
+      const text = textArr[0].text;
       console.log("text", text);
-      return text
-    }).then((text) => {
+      return text;
+    })
+    .then((text) => {
       chrome.runtime.sendMessage({ type: "text_response", text });
     })
     .catch((error) => {
       console.error("There was a problem with the fetch operation:", error);
     });
-};
-
+}
 async function captureAndProcessTab(tab) {
   return await chrome.tabs.captureVisibleTab(tab.windowId, {
     format: "jpeg",
     quality: 20,
   });
+}
+
+async function sendToCloudTextToAudio(text) {
+
 }
